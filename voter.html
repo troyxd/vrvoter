@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vote Counter</title>
+</head>
+<body>
+
+<h1>Vote Counter</h1>
+
+<div>
+  <h2>Vote Counts:</h2>
+  <p>Option 1: <span id="voteCount1">0</span></p>
+  <p>Option 2: <span id="voteCount2">0</span></p>
+  <p>Option 3: <span id="voteCount3">0</span></p>
+</div>
+
+<script>
+// Initialize vote counters
+let voteCounts = {
+  'Option1': 0,
+  'Option2': 0,
+  'Option3': 0
+};
+
+// Import necessary modules
+const http = require('http');
+
+// Create a server
+const server = http.createServer((req, res) => {
+  if (req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString(); // Convert buffer to string
+    });
+    req.on('end', () => {
+      const vote = parseInt(body.trim()); // Convert body to integer
+      if (vote >= 1 && vote <= 3) {
+        voteCounts[vote]++;
+        res.end('Vote counted successfully.');
+      } else {
+        res.statusCode = 400;
+        res.end('Invalid vote.');
+      }
+    });
+  } else if (req.method === 'GET') {
+    const response = JSON.stringify(voteCounts);
+    res.setHeader('Content-Type', 'application/json');
+    res.end(response);
+  } else {
+    res.statusCode = 405;
+    res.end('Method Not Allowed');
+  }
+});
+
+// Define the port number
+const PORT = process.env.PORT || 3000;
+
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+
+  
+function updateVoteCounts() {
+  fetch('/vote', {
+    method: 'GET'
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to fetch vote counts');
+    }
+    return response.json();
+  })
+  .then(data => {
+    document.getElementById('voteCount1').textContent = data['1'];
+    document.getElementById('voteCount2').textContent = data['2'];
+    document.getElementById('voteCount3').textContent = data['3'];
+  })
+  .catch(error => {
+    console.error(error);
+    alert('Error fetching vote counts');
+  });
+}
+</script>
+
+</body>
+</html>
